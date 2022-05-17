@@ -135,60 +135,60 @@ const getbookId = async function (req, res) {
 
 
 const updatebook = async function (req, res) {
-   try {
-       let bookId = req.params.bookId;
-    if (bookId.length < 24 || bookId.length > 24) {
-        return res.status(400).send({ status: false, msg: "Plz Enter Valid Length Of BookId in Params" });
+    try {
+        let bookId = req.params.bookId;
+        if (bookId.length < 24 || bookId.length > 24) {
+            return res.status(400).send({ status: false, msg: "Plz Enter Valid Length Of BookId in Params" });
+        }
+
+        let body = req.body;
+        const filterConditions = { isDeleted: false, deletedAt: null };
+
+        if (isValidRequestBody(body)) {
+            const { title, excerpt, ISBN, releasedAt } = body;
+
+            if (body.hasOwnProperty("title")) {
+                if (isValid(title)) {
+                    filterConditions["title"] = title.trim();
+                } else {
+                    res.status(400).send({ status: false, message: "enter a valid title" });
+                    return
+                }
+            }
+
+            if (body.hasOwnProperty("excerpt")) {
+                if (isValid(excerpt)) {
+                    filterConditions["excerpt"] = excerpt.trim();
+                } else {
+                    res.status(400).send({ status: false, message: `format for excerpt is incorrect` });
+                    return
+                }
+            }
+
+            if (body.hasOwnProperty("releasedAt")) {
+                if (isValid(releasedAt)) {
+                    filterConditions["releasedAt"] = releasedAt;
+
+                } else {
+                    res.status(400).send({ status: false, message: `format for releasedAt is incorrect`, });
+                    return
+                }
+            }
+            if (body.hasOwnProperty("ISBN")) {
+                if (isValid(ISBN)) {
+                    filterConditions["ISBN"] = ISBN.trim();
+
+                } else {
+                    res.status(400).send({ status: false, message: `format for ISBN is incorrect`, });
+                    return
+                }
+            }
+            const updatedBook = await bookModel.findByIdAndUpdate({ _id: bookId }, { $set: filterConditions }, { new: true });
+            res.status(200).send({ status: true, message: "Blog successfully updated", data: updatedBook })
+        } else {
+            res.status(400).send({ status: false, msg: "Plz Enter Data In Body" });
+        }
     }
-
-    let body = req.body;
-    const filterConditions = { isDeleted: false, deletedAt: null };
-
-    if (isValidRequestBody(body)) {
-        const { title, excerpt, ISBN, releasedAt } = body;
-
-        if (body.hasOwnProperty("title")) {
-            if (isValid(title)) {
-                filterConditions["title"] = title.trim();
-            } else {
-                res.status(400).send({ status: false, message: "enter a valid title" });
-                return
-            }
-        }
-
-        if (body.hasOwnProperty("excerpt")) {
-            if (isValid(excerpt)) {
-                filterConditions["excerpt"] = excerpt.trim();
-            } else {
-                res.status(400).send({ status: false, message: `format for excerpt is incorrect` });
-                return
-            }
-        }
-
-        if (body.hasOwnProperty("releasedAt")) {
-            if (isValid(releasedAt)) {
-                filterConditions["releasedAt"] = releasedAt;
-
-            } else {
-                res.status(400).send({ status: false, message: `format for releasedAt is incorrect`, });
-                return
-            }
-        }
-        if (body.hasOwnProperty("ISBN")) {
-            if (isValid(ISBN)) {
-                filterConditions["ISBN"] = ISBN.trim();
-
-            } else {
-                res.status(400).send({ status: false, message: `format for ISBN is incorrect`, });
-                return
-            }
-        }
-        const updatedBook = await bookModel.findByIdAndUpdate({ _id: bookId }, { $set: filterConditions }, { new: true });
-        res.status(200).send({ status: true, message: "Blog successfully updated", data: updatedBook })
-    } else {
-        res.status(400).send({ status: false, msg: "Plz Enter Data In Body" });
-    }
-        }
     catch (err) {
         res.status(500).send({ msg: err.message });
     }
