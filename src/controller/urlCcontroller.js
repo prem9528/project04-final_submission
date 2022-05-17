@@ -39,22 +39,40 @@ const createShortUrl = async function (req, res) {
                     
                 })
                 await newurl.save()
-               return res.status(201).send(newurl)
+               return res.status(201).send({status: true, message: "url shortened ", data: newurl})
         }
         
         
     } else {
-        res.status(401).json('Invalid longUrl')
+        res.status(400).json('Invalid longUrl')
     }
 
 }
 catch (err) {
-    console.log(err)
-    res.status(500).json('Server Error')
-} 
+    res.status(500).send({ msg: err.message });
+}
 }
 
 
+const getUrl =  async function (req, res) {
+    try {
+       
+        let isUrlPresent = await UrlModel.findOne({
+            urlCode: req.params.urlCode
+        })
+        if (isUrlPresent) {
+            
+            return res.status(200).redirect(isUrlPresent.longUrl)
+        } else {
+            
+            return res.status(404).json({status: false, message: 'No URL Found'})
+        }
+
+    }
+    catch (err) {
+        res.status(500).send({ msg: err.message });
+    }
+}
 
 
-module.exports = {createShortUrl}
+module.exports = {createShortUrl, getUrl}
