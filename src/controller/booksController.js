@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const userModel = require("../models/userModel");
 const bookModel = require('../models/booksModel');
+const reviewModel = require('../models/reviewModel');
 
 
 const isValid = function (value) {
@@ -123,7 +124,9 @@ const getbookId = async function (req, res) {
             return res.status(404).send({ status: false, message: "Data Not Found" });
         }
 
-        Object.assign(bData._doc, { reviewsData: [] });
+        let reviewid = await reviewModel.find({ bookId: bookId }).select({ bookId: 1, reviewedBy: 1, reviewedAt: 1, rating: 1, review: 1 });
+        
+        Object.assign(bData._doc, { reviewsData: reviewid });
         res.status(200).send({ status: true, message: "Books list", data: bData });
     }
     catch (err) {
