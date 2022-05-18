@@ -5,11 +5,11 @@ const redis = require("redis");
 const { promisify } = require("util");
 
 const redisClient = redis.createClient(
-    16258,
-    "redis-16258.c264.ap-south-1-1.ec2.cloud.redislabs.com", { no_ready_check: true }
+    14645,
+    "redis-14645.c212.ap-south-1-1.ec2.cloud.redislabs.com", { no_ready_check: true }
 );
 
-redisClient.auth("uMyA53k63VDIdmTcfySCv8cb3w9s0Jy4", function(err) {
+redisClient.auth("NLBmwO9GfmBfyDklW8eutoQSyWOENswG", function(err) {
     if (err) throw err;
 });
 
@@ -37,7 +37,7 @@ const createShortUrl = async function (req, res) {
     //     return res.status(401).json('Invalid base URL')
     // }
 
-    const urlCode = shortid.generate()
+    const urlCode = shortid.generate().toLowerCase()
 
     
     if (validUrl.isUri(longUrl)) {
@@ -82,28 +82,21 @@ const getUrl =  async function (req, res) {
     try {
 
         const urlCode = req.params.urlCode
-       
-        // let isUrlPresent = await UrlModel.findOne({
-        //     urlCode: req.params.urlCode
-        // })
-        // if (isUrlPresent) {
-            
-        //     return res.status(200).redirect(isUrlPresent.longUrl)
-        // } else {
-            
-        //     return res.status(404).json({status: false, message: 'No URL Found'})
-        // }
-
+        
         const urlDataFromCache = await GET_ASYNC(urlCode);
+        console.log("1st")
+        console.log(urlDataFromCache)
 
         if (urlDataFromCache) {
 
-            return res.status(302).redirect(urlDataFromCache.longUrl);
+            return res.status(302).redirect(urlDataFromCache);
 
         } else {
 
             
             const urlDataByUrlCode = await UrlModel.findOne({ urlCode });
+            console.log("2nd")
+            console.log(urlDataByUrlCode)
 
             if (!urlDataByUrlCode) {
                 return res
@@ -116,8 +109,10 @@ const getUrl =  async function (req, res) {
                 urlDataByUrlCode.longUrl
             );
 
-           
+           console.log("3rd")
+           console.log(urlDataByUrlCode.longUrl)
             return res.status(302).redirect(urlDataByUrlCode.longUrl);
+            
 
     }
 }
