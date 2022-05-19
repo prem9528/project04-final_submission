@@ -82,8 +82,8 @@ const createShortUrl = async function (req, res) {
 
             if (url) {
                 const urlDataFromCache = await GET_ASYNC(url.urlCode)
-                console.log("cache present")
-                console.log(urlDataFromCache)
+//                 console.log("cache present")
+//                 console.log(urlDataFromCache)
                 return res.status(400).send({ status: false, message: `url already shortned as:-  ${url.shortUrl}` })
             } else {
 
