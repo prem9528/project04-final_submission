@@ -45,7 +45,7 @@ const isValidUrl = function (value) {
 const createShortUrl = async function (req, res) {
     try {
         const requestBody = req.body;
-        let longUrl = req.body.longUrl
+        let longUrl = req.body.longUrl.trim()
         let baseUrl = "localhost:3000"
 
         // if (!validUrl.isUri(baseUrl)) {
@@ -125,7 +125,7 @@ const getUrl = async function (req, res) {
                 .send({ status: false, message: " input data is not required" });
         }
 
-        const urlCode = req.params.urlCode
+        const urlCode = req.params.urlCode.trim()
 
         if (!/^(?=.*[a-zA-Z].*)[a-zA-Z\d!@#-_$%&*]{8,}$/.test(urlCode)) {
             return res
