@@ -21,85 +21,48 @@ redisClient.on("connect", async function () {
 const SET_ASYNC = promisify(redisClient.SET).bind(redisClient);
 const GET_ASYNC = promisify(redisClient.GET).bind(redisClient);
 
-//********************************************VALIDATION FUNCTIONS********************************************************** */
 
-const isValid = function (value) {
-    if (typeof value == "undefined" || value == null) return false;
-    if (typeof value == "string" && value.trim().length > 0) return true;
-    return false;
-};
-
-const isValidRequest = function (object) {
-    return Object.keys(object).length > 0;
-};
-
-// using regex for validating url
-const isValidUrl = function (value) {
-    let regexForUrl =
-       /(:?^((https|http|HTTP|HTTPS){1}:\/\/)(([w]{3})[\.]{1})?([a-zA-Z0-9]{1,}[\.])[\w]*((\/){1}([\w@?^=%&amp;~+#-_.]+))*)$/;
-    return regexForUrl.test(value);
-};
 
 //*************************************LOGIC CODE************************************************ */
 
 const createShortUrl = async function (req, res) {
     try {
         const requestBody = req.body;
-        let longUrl = req.body.longUrl.trim()
+        let longUrl = req.body.longUrl
         let baseUrl = "localhost:3000"
-
-        // if (!validUrl.isUri(baseUrl)) {
-        //     return res.status(401).json('Invalid base URL')
-        // }
-        if (!isValidRequest(requestBody)) {
-            return res.status(400).send({ status: false, message: "data is required" });
-        }
-        // if requestBody has more than one key
-        if (Object.keys(requestBody).length > 1) {
-            return res
-                .status(400)
-                .send({ status: false, message: "invalid entry in request body" });
-        }
-
         const urlCode = shortid.generate().toLowerCase()
 
-        if (!isValid(longUrl)) {
-            return res.status(400).send({ status: false, message: "URL is required" });
-        }
-
-        if (!isValidUrl(longUrl)) {
-            return res
-                .status(400)
-                .send({ status: false, message: "Enter a valid URL" });
-        }
-
-
-        if (validUrl.isUri(longUrl)) {
-
-
-            let url = await UrlModel.findOne({ longUrl })
-            // console.log(url)
-
-            if (url) {
-                const urlDataFromCache = await GET_ASYNC(url.urlCode)
-                // console.log("cache present")
-                // console.log(urlDataFromCache)
-                return res.status(400).send({ status: false, message: `url already shortned as:-  ${url.shortUrl}` })
-            } else {
-
-                const shortUrl = baseUrl + '/' + urlCode
-                const newurl = await UrlModel.create({ urlCode, longUrl, shortUrl })
-                await newurl.save()
-                const addingUrlDataInCache = SET_ASYNC(
-                    urlCode,
-                    longUrl
-                )
-                return res.status(201).send({ status: true, message: "url shortened ", data: newurl })
+        if (longUrl) {
+            longUrl = longUrl.trim()
+            if (!(longUrl.includes('//'))) {
+                return res.status(400).send({ status: false, msg: "Invalid longUrl" })
             }
-        } else {
-            return res.status(400).send('Invalid longUrl')
-        }
+            const urlParts = longUrl.split('//')
+            const scheme = urlParts[0]
+            const uri = urlParts[1]
+            let shortenedUrlDetails
+            if (!(uri.includes('.'))) {
+                return res.status(400).send({ status: false, msg: 'Invalid longUrl' })
+            }
+            const uriParts = uri.split('.')
+            if (!(((scheme == "http:") || (scheme == "https:")) && (uriParts[0].trim().length) && (uriParts[1].trim().length))) {
+                return res.status(400).send({ status: false, msg: "Invalid longUrl" })
+            }
+            shortenedUrlDetails = await UrlModel.findOne({ longUrl })
+            if (shortenedUrlDetails) {
+                res.status(400).send({ status: true, msg: "url is already shortned ", data: shortenedUrlDetails })
+            } else {
+                const shortUrl = baseUrl + '/' + urlCode.toLowerCase()
+                shortenedUrlDetails = await UrlModel.create({ urlCode, longUrl, shortUrl })
+                await SET_ASYNC(urlCode.toLowerCase(),
+                    longUrl)
+                res.status(201).send({ status: true.valueOf, data: shortenedUrlDetails })
+            }
 
+
+        } else {
+            res.status(401).send({ status: false, msg: 'longUrl must be present in the body' })
+        }
     }
     catch (err) {
         res.status(500).send({ msg: err.message });
@@ -113,13 +76,13 @@ const getUrl = async function (req, res) {
         const requestBody = req.body;
         const queryParams = req.query;
 
-        if (isValidRequest(queryParams)) {
+        if (queryParams.length > 0) {
             return res
                 .status(400)
                 .send({ status: false, message: "invalid request" });
         }
 
-        if (isValidRequest(requestBody)) {
+        if (Object.keys(requestBody).length != 0) {
             return res
                 .status(400)
                 .send({ status: false, message: " input data is not required" });
@@ -134,8 +97,7 @@ const getUrl = async function (req, res) {
         }
 
         const urlDataFromCache = await GET_ASYNC(urlCode);
-        // console.log("1st")
-        // console.log(urlDataFromCache)
+
 
         if (urlDataFromCache) {
 
@@ -145,8 +107,6 @@ const getUrl = async function (req, res) {
 
 
             const urlDataByUrlCode = await UrlModel.findOne({ urlCode });
-            // console.log("2nd")
-            // console.log(urlDataByUrlCode)
 
             if (!urlDataByUrlCode) {
                 return res
@@ -158,9 +118,6 @@ const getUrl = async function (req, res) {
                 urlCode,
                 urlDataByUrlCode.longUrl
             );
-
-            // console.log("3rd")
-            // console.log(urlDataByUrlCode.longUrl)
             return res.status(302).redirect(urlDataByUrlCode.longUrl);
 
 

@@ -5,7 +5,7 @@ const urlSchema = new mongoose.Schema({
         type : String,
         require : true, 
         unique: true, 
-        // lowercase: true, 
+        lowercase: true, 
         trim : true
     }, 
     longUrl: {
@@ -20,6 +20,7 @@ const urlSchema = new mongoose.Schema({
         unique: true
         }
    
-}, { timestamps: true });
+});
+// , { timestamps: true });
 
 module.exports = mongoose.model('url', urlSchema);
